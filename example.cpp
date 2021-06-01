@@ -106,11 +106,33 @@ int main(){
     std::thread th2(base);
     std::thread th3(base);
     std::thread th4(base);
+    std::thread th5(base);
+    std::thread th6(base);
+    std::thread th7(base);
+    std::thread th8(base);
+    std::thread th9(base);
+    std::thread th10(base);
+    std::thread th11(base);
+    std::thread th12(base);
+    std::thread th13(base);
+    std::thread th14(base);
+    std::thread th15(base);
 
     th1.join();
     th2.join();
     th3.join();
     th4.join();
+    th5.join();
+    th6.join();
+    th7.join();
+    th8.join();
+    th9.join();
+    th10.join();
+    th11.join();
+    th12.join();
+    th13.join();
+    th14.join();
+    th15.join();
 
     std::chrono::duration<double> sec = std::chrono::system_clock::now() - start;
     std::cout << "duration : " << sec.count() << " seconds" << std::endl;

@@ -43,18 +43,35 @@ namespace NF{
 #define NF_RECORD_FUNC(string) \
     NF::ProfileFunction NF_MARKER_PROFILED_FUNCTION(string);
 
-    using ProfileRecord = std::unordered_map<const char *, std::atomic<unsigned int>>;
+    using GlobalProfileRecord = std::unordered_map<const char *, std::atomic<unsigned int>>;
+    static GlobalProfileRecord global_profile_record;
+
+    struct ProfileRecordPerThread{
+        ProfileRecordPerThread() : m_data() {}
+        ~ProfileRecordPerThread(){
+            // Pass thread_local record to global record
+            for(auto e:m_data){
+                global_profile_record[e.first] += e.second;
+            }
+        }
+        inline void gather(const char *callee){
+            m_data[callee]++;
+        }
+        std::unordered_map<const char *, unsigned int> m_data;
+    };
+
+    constexpr char *unmarked_str = "Unmarked";
+    thread_local ProfileRecordPerThread thread_local_profile_record;
+    thread_local const char *callee = unmarked_str;
+    struct itimerval it;
+    struct sigaction sa;
+
     enum class ProfileMode{
         TrackAll,
         TrackMarkedOnly
     };
 
     static ProfileMode mode = ProfileMode::TrackMarkedOnly;
-    static ProfileRecord profile_record;
-    constexpr char *unmarked_str = "Unmarked";
-    thread_local const char *callee = unmarked_str;
-    struct itimerval it;
-    struct sigaction sa;
 
     std::chrono::system_clock::time_point start;
     std::chrono::duration<double> sec;
@@ -70,10 +87,10 @@ namespace NF{
         const char *caller;
     };
 
-    void signal_handler(int _){
+    inline void signal_handler(int _){
         if((mode == ProfileMode::TrackMarkedOnly && unmarked_str!=callee) ||
-            mode == ProfileMode::TrackAll)
-            profile_record[callee]++;
+           mode == ProfileMode::TrackAll)
+            thread_local_profile_record.gather(callee);
     }
 
     void START(ProfileMode mode_ = ProfileMode::TrackMarkedOnly){
@@ -105,7 +122,7 @@ namespace NF{
             NF::END();
         }
 
-        if(profile_record.empty()){
+        if(global_profile_record.empty()){
             std::cout<<"Nutrition Facts table is empty! You probably forgot starting profiling with NF::START(), or marking functions using NF_RECORD_FUNC()."<<std::endl;
             return;
         }
@@ -116,10 +133,10 @@ namespace NF{
         std::cout<<"|      Description     |   Ratio   |"<<std::endl;
         std::cout<<"+----------------------+-----------+"<<std::endl;
         double total = 0;
-        for(std::pair<const char *, unsigned int> e:profile_record){
+        for(std::pair<const char *, unsigned int> e:global_profile_record){
             total += e.second;
         }
-        for(std::pair<const char *, unsigned int> e:profile_record){
+        for(std::pair<const char *, unsigned int> e:global_profile_record){
             std::cout<<"| "<< std::setw(20) << e.first;
             std::cout<<" | " << std::setw(8) <<(e.second / total) * 100 <<"% |"<<std::endl;
         }
@@ -130,4 +147,3 @@ namespace NF{
     }
 
 }
-
