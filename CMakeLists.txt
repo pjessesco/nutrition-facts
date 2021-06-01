@@ -28,4 +28,4 @@ project(nutrition-facts)
 set(CMAKE_CXX_STANDARD 14)
 
 add_link_options(-lpthread)
-add_executable(nutrition_facts_cpp example.cpp)
+add_executable(nutrition_facts_example example.cpp)
