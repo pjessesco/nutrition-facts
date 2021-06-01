@@ -29,49 +29,88 @@
 #include <thread>
 #include "nutrition_fact/nutrition_facts.h"
 
-inline void COMPLEX_CODE_EXAMPLE(float x){
+inline float COMPLEX_CODE_EXAMPLE(float x){
     float t = x;
-    for(int i=0;i<100000000;i++){
+    for(int i=0;i<10;i++){
         t = sin(t);
     }
+    return t;
 }
 
-void execute(float x){
+float execute1(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute")
-    COMPLEX_CODE_EXAMPLE(x);
+    NF_RECORD_FUNC("execute1() : 10%")
+    return COMPLEX_CODE_EXAMPLE(x);
 }
 
+float execute2(float x){
+    // Use NF_RECORD_FUNC("describe") to profile
+    NF_RECORD_FUNC("execute2() : 20%")
+    return COMPLEX_CODE_EXAMPLE(x);
+}
 
+float execute3(float x){
+    // Use NF_RECORD_FUNC("describe") to profile
+    NF_RECORD_FUNC("execute3() : 30%")
+    return COMPLEX_CODE_EXAMPLE(x);
+}
+
+float execute4(float x){
+    // Use NF_RECORD_FUNC("describe") to profile
+    NF_RECORD_FUNC("execute4() : 40%")
+    return COMPLEX_CODE_EXAMPLE(x);
+}
+
+// This function will call `executeN()` functions with given probability
 void base(){
-    // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("base")
-
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dis(0,1);
+    std::uniform_int_distribution<int> dis(1,10);
 
-    float rand_flt = dis(gen);
+    for(int i=0;i<25000000;i++){
+        int rand_flt = dis(gen);
+        switch(rand_flt){
+            case 1:
+                execute1((float)i/rand_flt);
+                break;
+            case 2: case 3:
+                execute2((float)i/rand_flt);
+                break;
+            case 4: case 5: case 6:
+                execute3((float)i/rand_flt);
+                break;
+            case 7: case 8: case 9: case 10:
+                execute4((float)i/rand_flt);
+                break;
+        }
+    }
 
-    execute(rand_flt);
-
-    COMPLEX_CODE_EXAMPLE(rand_flt);
 }
 
 int main(){
-    // NF::START() starts recording
+    /*
+     * NF::START() starts recording.
+     * `TrackAll` mode traces every function as `Unmarked` function.
+     * `TrackMarkedOnly` mode traces function marked using `NF_RECORD_FUNC()`.
+     * Default mode is `TrackMarkedOnly`.
+     *
+     * NF::START(NF::ProfileMode::TrackAll);
+     * NF::START(NF::ProfileMode::TrackMarkedOnly);
+     */
+
     NF::START();
+
     std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 
-    std::thread t1(base);
-    std::thread t2(base);
-    std::thread t3(base);
-    std::thread t4(base);
+    std::thread th1(base);
+    std::thread th2(base);
+    std::thread th3(base);
+    std::thread th4(base);
 
-    t1.join();
-    t2.join();
-    t3.join();
-    t4.join();
+    th1.join();
+    th2.join();
+    th3.join();
+    th4.join();
 
     std::chrono::duration<double> sec = std::chrono::system_clock::now() - start;
     std::cout << "duration : " << sec.count() << " seconds" << std::endl;
