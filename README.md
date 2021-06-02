@@ -2,6 +2,34 @@
 
 Tiny sampling profiler for C++
 
+
+
+### Usage
+
+    void function(){
+        // NF_RECORD_FUNC() marks function to be profiled
+        NF_RECORD_FUNC("This is function()")
+        ...
+        ...
+    }
+
+    int main(){
+        // NF::START() starts recording
+        NF::START();
+    
+        function();
+
+        // NF::END() stops recording
+        NF::END();
+    
+        // NF::SHOW() shows profile result
+        NF::SHOW();
+
+        return 0;
+    }
+
+Refer `example.cpp` for actual executable example.
+
 ### Example output
 
     +- Nutrition Facts ----+-----------+

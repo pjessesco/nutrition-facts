@@ -134,12 +134,10 @@ int main(){
     th14.join();
     th15.join();
 
-    std::chrono::duration<double> sec = std::chrono::system_clock::now() - start;
-    std::cout << "duration : " << sec.count() << " seconds" << std::endl;
-
     // NF::END() stops recording
     NF::END();
-    // NF::END() shows profile result
+
+    // NF::SHOW() shows profile result
     NF::SHOW();
     return 0;
 }
