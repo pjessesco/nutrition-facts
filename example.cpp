@@ -39,25 +39,25 @@ inline float COMPLEX_CODE_EXAMPLE(float x){
 
 float execute1(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute1() : 10%")
+    NF_RECORD_FUNC("execute1 execute 1")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute2(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute2() : 20%")
+    NF_RECORD_FUNC("execute2()")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute3(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute3() : 30%")
+    NF_RECORD_FUNC("Function 3, target ratio : 30%")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute4(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute4() : 40%")
+    NF_RECORD_FUNC("f4()")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
@@ -67,7 +67,7 @@ void base(){
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dis(1,10);
 
-    for(int i=0;i<25000000;i++){
+    for(int i=0;i<20000000;i++){
         int rand_flt = dis(gen);
         switch(rand_flt){
             case 1:

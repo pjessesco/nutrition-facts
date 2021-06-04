@@ -37,6 +37,7 @@
 #include <iomanip>
 #include <vector>
 #include <chrono>
+#include <sstream>
 
 namespace NF{
 
@@ -45,6 +46,12 @@ namespace NF{
 
     using GlobalProfileRecord = std::unordered_map<const char *, std::atomic<unsigned int>>;
     static GlobalProfileRecord global_profile_record;
+
+    using ProfileRecordType = std::pair<const char *, unsigned int>;
+
+    bool compare_ratio(const ProfileRecordType &a, const ProfileRecordType &b){
+        return a.second > b.second;
+    }
 
     struct ProfileRecordPerThread{
         ProfileRecordPerThread() : m_data() {}
@@ -65,6 +72,11 @@ namespace NF{
     thread_local const char *callee = unmarked_str;
     struct itimerval it;
     struct sigaction sa;
+
+    const std::string title = " Nutrition Facts ";
+    const int title_len = title.length();
+    const std::string col1_title = "Description";
+    const std::string col2_title = "Ratio";
 
     enum class ProfileMode{
         TrackAll,
@@ -116,6 +128,27 @@ namespace NF{
         memset(&it, 0, sizeof(it));
     }
 
+    std::string one_column_writer(int width, const std::string &str,
+                                  const std::string &blank=" ", const std::string &border="|"){
+        std::string substr(width, blank[0]);
+
+        std::copy(str.begin(), str.end(), substr.begin());
+        return border + blank + substr + blank + border;
+    }
+
+    std::string two_column_writer(int width1, int width2,
+                                  const std::string &str1, const std::string &str2,
+                                  const std::string &blank=" ", const std::string &border="|"){
+        std::string substr1(width1, blank[0]);
+        std::string substr2(width2, blank[0]);
+
+        std::copy(str1.begin(), str1.end(), substr1.begin());
+        std::copy(str2.begin(), str2.end(), substr2.begin());
+        return border + blank + substr1 + blank + border + blank +substr2 + blank + border;
+    }
+
+
+    // TODO : This function can be simplified using <format>, which is not implemented yet.
     void SHOW(){
         if(it.it_value.tv_usec != 0){
             std::cout<<"Profiling is not terminated, call NF::END() to terminate"<<std::endl;
@@ -127,23 +160,43 @@ namespace NF{
             return;
         }
 
-        // TODO : Decide width programmatically
-        // TODO : Sort by percentage
-        std::cout<<"+- Nutrition Facts ----+-----------+"<<std::endl;
-        std::cout<<"|      Description     |   Ratio   |"<<std::endl;
-        std::cout<<"+----------------------+-----------+"<<std::endl;
-        double total = 0;
-        for(std::pair<const char *, unsigned int> e:global_profile_record){
-            total += e.second;
-        }
-        for(std::pair<const char *, unsigned int> e:global_profile_record){
-            std::cout<<"| "<< std::setw(20) << e.first;
-            std::cout<<" | " << std::setw(8) <<(e.second / total) * 100 <<"% |"<<std::endl;
-        }
-        std::cout<<"+----------------------+-----------+"<<std::endl;
-        std::cout<<"|      Total sample : "<<std::setw(7)<<total<<"      |"<<std::endl;
-        std::cout<<"|      Duration : "<<std::setw(7)<<sec.count() << " sec"<<"      |"<<std::endl;
-        std::cout<<"+----------------------------------+"<<std::endl;
-    }
+        // Sort record by sample
+        std::vector<ProfileRecordType> sorted_global_record(global_profile_record.begin(), global_profile_record.end());
+        std::sort(sorted_global_record.begin(), sorted_global_record.end(), compare_ratio);
 
+        int longest_description_len = -1;
+        int total_sample = 0;
+        for(ProfileRecordType e : sorted_global_record){
+            longest_description_len = std::max<int>(strlen(e.first), longest_description_len);
+            total_sample += e.second;
+        }
+
+        int width1 = std::max<int>(longest_description_len, strlen("Description"));
+        int width2 = 6;
+
+        std::cout<<"+"<<title;
+        if(width1 < title_len){
+            std::cout<< std::string(width1 + width2 + 5 - title_len, '-')<<"+"<<std::endl;
+        }
+        else{
+            std::cout<<std::string(width1 + 2 - title_len, '-')<<"+"<<std::string(width2 + 2, '-')<<"+"<<std::endl;
+        }
+
+        std::cout<<two_column_writer(width1, width2, "Description", "Ratio")<<std::endl;
+        std::cout<<two_column_writer(width1, width2, "", "", "-", "+")<<std::endl;
+        for(ProfileRecordType e : sorted_global_record){
+            std::stringstream ss;
+            ss << std::setprecision(4)<<(e.second / (float)total_sample * 100);
+
+            std::cout<<two_column_writer(width1, width2, e.first, ss.str()+"%")<<std::endl;
+        }
+        std::cout<<two_column_writer(width1, width2, "", "", "-", "+")<<std::endl;
+        std::cout<<one_column_writer(width1 + width2 + 3, "Total sample : "+std::to_string(total_sample))<<std::endl;
+
+        std::stringstream ss;
+        ss << std::setprecision(2)<<sec.count();
+
+        std::cout<<one_column_writer(width1 + width2 + 3, "Duration : "+ss.str()+"s")<<std::endl;
+        std::cout<<one_column_writer(width1 + width2 + 3, "", "-", "+")<<std::endl;
+    }
 }
