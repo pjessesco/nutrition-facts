@@ -40,18 +40,19 @@
 #include <sstream>
 
 namespace NF{
-
-#define NF_RECORD_FUNC(string) \
-    NF::ProfileFunction NF_MARKER_PROFILED_FUNCTION(string);
-
     using GlobalProfileRecord = std::unordered_map<const char *, std::atomic<unsigned int>>;
     static GlobalProfileRecord global_profile_record;
 
-    using ProfileRecordType = std::pair<const char *, unsigned int>;
+    using ThreadProfileRecordType = std::pair<const char *, unsigned int>;
 
-    bool compare_ratio(const ProfileRecordType &a, const ProfileRecordType &b){
+    bool compare_ratio(const ThreadProfileRecordType &a, const ThreadProfileRecordType &b){
         return a.second > b.second;
     }
+
+    enum class ProfileMode{
+        TrackAll,
+        TrackMarkedOnly
+    };
 
     struct ProfileRecordPerThread{
         ProfileRecordPerThread() : m_data() {}
@@ -68,38 +69,33 @@ namespace NF{
     };
 
     constexpr char *unmarked_str = "Unmarked";
-    thread_local ProfileRecordPerThread thread_local_profile_record;
-    thread_local const char *callee = unmarked_str;
-    struct itimerval it;
-    struct sigaction sa;
-
-    const std::string title = " Nutrition Facts ";
+    const std::string title(" Nutrition Facts ");
     const int title_len = title.length();
-    const std::string col1_title = "Description";
-    const std::string col2_title = "Ratio";
-
-    enum class ProfileMode{
-        TrackAll,
-        TrackMarkedOnly
-    };
+    const std::string col1_title("Description");
+    const std::string col2_title("Ratio");
 
     static ProfileMode mode = ProfileMode::TrackMarkedOnly;
 
+    thread_local ProfileRecordPerThread thread_local_profile_record;
+    thread_local const char *callee = unmarked_str;
+
+    struct itimerval it;
+    struct sigaction sa;
     std::chrono::system_clock::time_point start;
     std::chrono::duration<double> sec;
 
-    struct ProfileFunction{
-        ProfileFunction(const char *new_callee){
-            caller = callee;
+    struct ProfileScope{
+        ProfileScope(const char *new_callee){
+            m_caller = callee;
             callee = new_callee;
         }
-        ~ProfileFunction(){
-            callee = caller;
+        ~ProfileScope(){
+            callee = m_caller;
         }
-        const char *caller;
+        const char *m_caller;
     };
 
-    inline void signal_handler(int _){
+    inline void record_counter(int _){
         if((mode == ProfileMode::TrackMarkedOnly && unmarked_str!=callee) ||
            mode == ProfileMode::TrackAll)
             thread_local_profile_record.gather(callee);
@@ -108,7 +104,7 @@ namespace NF{
     void START(ProfileMode mode_ = ProfileMode::TrackMarkedOnly){
         mode = mode_;
         memset(&sa, 0, sizeof(sa));
-        sa.sa_handler = &signal_handler;
+        sa.sa_handler = &record_counter;
         sa.sa_flags = SA_RESTART;
         sigaction(SIGPROF, &sa, NULL);
 
@@ -147,7 +143,6 @@ namespace NF{
         return border + blank + substr1 + blank + border + blank +substr2 + blank + border;
     }
 
-
     // TODO : This function can be simplified using <format>, which is not implemented yet.
     void SHOW(){
         if(it.it_value.tv_usec != 0){
@@ -161,30 +156,30 @@ namespace NF{
         }
 
         // Sort record by sample
-        std::vector<ProfileRecordType> sorted_global_record(global_profile_record.begin(), global_profile_record.end());
+        std::vector<ThreadProfileRecordType> sorted_global_record(global_profile_record.begin(), global_profile_record.end());
         std::sort(sorted_global_record.begin(), sorted_global_record.end(), compare_ratio);
 
         int longest_description_len = -1;
         int total_sample = 0;
-        for(ProfileRecordType e : sorted_global_record){
+        for(ThreadProfileRecordType e : sorted_global_record){
             longest_description_len = std::max<int>(strlen(e.first), longest_description_len);
             total_sample += e.second;
         }
 
-        int width1 = std::max<int>(longest_description_len, strlen("Description"));
+        int width1 = std::max<int>(longest_description_len, col1_title.length());
         int width2 = 6;
 
         std::cout<<"+"<<title;
         if(width1 < title_len){
-            std::cout<< std::string(width1 + width2 + 5 - title_len, '-')<<"+"<<std::endl;
+            std::cout<<std::string(width1 + width2 + 5 - title_len, '-')<<"+"<<std::endl;
         }
         else{
             std::cout<<std::string(width1 + 2 - title_len, '-')<<"+"<<std::string(width2 + 2, '-')<<"+"<<std::endl;
         }
 
-        std::cout<<two_column_writer(width1, width2, "Description", "Ratio")<<std::endl;
+        std::cout<<two_column_writer(width1, width2, col1_title, col2_title)<<std::endl;
         std::cout<<two_column_writer(width1, width2, "", "", "-", "+")<<std::endl;
-        for(ProfileRecordType e : sorted_global_record){
+        for(ThreadProfileRecordType e : sorted_global_record){
             std::stringstream ss;
             ss << std::setprecision(4)<<(e.second / (float)total_sample * 100);
 
@@ -196,4 +191,7 @@ namespace NF{
         std::cout<<one_column_writer(width1 + width2 + 3, "Duration : "+std::to_string(sec.count())+"s")<<std::endl;
         std::cout<<one_column_writer(width1 + width2 + 3, "", "-", "+")<<std::endl;
     }
+
+#define NF_RECORD_FUNC(string) \
+    NF::ProfileScope NF_MARKER_PROFILED_FUNCTION(string);
 }
