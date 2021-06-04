@@ -39,25 +39,25 @@ inline float COMPLEX_CODE_EXAMPLE(float x){
 
 float execute1(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute1 execute 1")
+    NF_RECORD_FUNC("execute1() 10% ->")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute2(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute2()")
+    NF_RECORD_FUNC("This function(execute2()) is called in 20% probability.")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute3(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("Function 3, target ratio : 30%")
+    NF_RECORD_FUNC("execute2() : 30%")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute4(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("f4()")
+    NF_RECORD_FUNC("40% execute4()")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 

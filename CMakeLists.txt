@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(nutrition-facts)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 
 add_link_options(-lpthread)
 add_executable(nutrition_facts_example example.cpp)
