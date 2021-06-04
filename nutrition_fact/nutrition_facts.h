@@ -193,10 +193,7 @@ namespace NF{
         std::cout<<two_column_writer(width1, width2, "", "", "-", "+")<<std::endl;
         std::cout<<one_column_writer(width1 + width2 + 3, "Total sample : "+std::to_string(total_sample))<<std::endl;
 
-        std::stringstream ss;
-        ss << std::setprecision(2)<<sec.count();
-
-        std::cout<<one_column_writer(width1 + width2 + 3, "Duration : "+ss.str()+"s")<<std::endl;
+        std::cout<<one_column_writer(width1 + width2 + 3, "Duration : "+std::to_string(sec.count())+"s")<<std::endl;
         std::cout<<one_column_writer(width1 + width2 + 3, "", "-", "+")<<std::endl;
     }
 }
