@@ -24,6 +24,8 @@
 
 #pragma once
 
+#if !defined(WIN32)
+
 #include <sys/time.h>
 
 #include <csignal>
@@ -195,3 +197,11 @@ namespace NF{
 #define NF_RECORD_FUNC(string) \
     NF::ProfileScope NF_MARKER_PROFILED_FUNCTION(string);
 }
+
+#else
+namespace NF{
+    void START(){
+        std::cout<<"Not implemented for Windows currently."<<std::endl;
+    }
+}
+#endif
