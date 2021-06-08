@@ -39,25 +39,25 @@ inline float COMPLEX_CODE_EXAMPLE(float x){
 
 float execute1(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute1() 10% ->")
+    NF_MARK_FUNC("execute1() 10% ->")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute2(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("This function(execute2()) is called in 20% probability.")
+    NF_MARK_FUNC("This function is called with 20% probability.")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute3(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("execute2() : 30%")
+    NF_MARK_FUNC("execute2() : 30%")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
 float execute4(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_RECORD_FUNC("40% execute4()")
+    NF_MARK_FUNC("40% execute4()")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
@@ -89,16 +89,16 @@ void base(){
 
 int main(){
     /*
-     * NF::START() starts recording.
+     * NF::Profiler::Start() starts recording.
      * `TrackAll` mode traces every function as `Unmarked` function.
      * `TrackMarkedOnly` mode traces function marked using `NF_RECORD_FUNC()`.
      * Default mode is `TrackMarkedOnly`.
      *
-     * NF::START(NF::ProfileMode::TrackAll);
-     * NF::START(NF::ProfileMode::TrackMarkedOnly);
+     * NF::Profiler::Start(NF::ProfileMode::TrackAll);
+     * NF::Profiler::Start(NF::ProfileMode::TrackMarkedOnly);
      */
 
-    NF::START();
+    NF::Profiler::Start();
 
     std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 
@@ -134,10 +134,10 @@ int main(){
     th14.join();
     th15.join();
 
-    // NF::END() stops recording
-    NF::END();
+    // NF::Profiler::End() shows profile result
+    NF::Profiler::End();
 
-    // NF::SHOW() shows profile result
-    NF::SHOW();
+    // NF::Profiler::Show() shows profile result
+    NF::Profiler::Show();
     return 0;
 }

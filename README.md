@@ -22,23 +22,23 @@ Tiny header-only sampling profiler for C++
 ### Usage
 
     void function(){
-        // NF_RECORD_FUNC() marks function to be profiled
-        NF_RECORD_FUNC("This is function()")
+        // NF_MARK_FUNC() marks function to be profiled
+        NF_MARK_FUNC("This is function()")
         ...
         ...
     }
 
     int main(){
-        // NF::START() starts recording
-        NF::START();
+        // NF::Profiler::Start(); starts recording
+        NF::Profiler::Start();
     
         function();
 
-        // NF::END() stops recording
-        NF::END();
+        // NF::Profiler::End() shows profile result
+        NF::Profiler::End();
     
-        // NF::SHOW() shows profile result
-        NF::SHOW();
+        // NF::Profiler::Show() shows profile result
+        NF::Profiler::Show();
 
         return 0;
     }
