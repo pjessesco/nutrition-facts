@@ -27,5 +27,10 @@ project(nutrition-facts)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_link_options(-lpthread)
-add_executable(nutrition_facts_example example.cpp)
+# Not build example by default
+set(NF_COMPILE_EXAMPLE ON)
+
+if(${NF_COMPILE_EXAMPLE})
+    add_link_options(-lpthread)
+    add_executable(nutrition_facts_example example.cpp)
+endif()

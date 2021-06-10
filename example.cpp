@@ -27,7 +27,8 @@
 #include <random>
 #include <chrono>
 #include <thread>
-#include "nutrition_fact/nutrition_facts.h"
+
+#include "nutrition_facts/nutrition_facts.h"
 
 inline float COMPLEX_CODE_EXAMPLE(float x){
     float t = x;
@@ -51,7 +52,7 @@ float execute2(float x){
 
 float execute3(float x){
     // Use NF_RECORD_FUNC("describe") to profile
-    NF_MARK_FUNC("execute2() : 30%")
+    NF_MARK_FUNC("execute3() : 30%")
     return COMPLEX_CODE_EXAMPLE(x);
 }
 
@@ -101,6 +102,8 @@ int main(){
     NF::Profiler::Start();
 
     std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+
+    base();
 
     std::thread th1(base);
     std::thread th2(base);
