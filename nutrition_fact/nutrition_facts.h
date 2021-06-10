@@ -125,11 +125,6 @@ namespace NF{
 
         // TODO : This function can be simplified using <format>, which is not implemented yet.
         static void Show(){
-            if(it.it_value.tv_usec != 0){
-                std::cout<<"Profiling is not terminated, call NF::Profiler::End() to terminate"<<std::endl;
-                End();
-            }
-
             if(global_profile_record.empty()){
                 std::cout<<"Nutrition Facts table is empty! You probably forgot starting profiling with NF::START(), or marking functions using NF_RECORD_FUNC()."<<std::endl;
                 return;
