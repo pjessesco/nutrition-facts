@@ -38,16 +38,26 @@
 #include <cstring>
 
 namespace NF{
+    // `GlobalProfileRecord` is accumulated data from every thread.
+    // It is updated when thread is terminated, or Profiler::End() is called.
     using GlobalProfileRecord = std::unordered_map<const char *, std::atomic<unsigned int>>;
     static GlobalProfileRecord global_profile_record;
 
+    // Pair of function description and its sample count
     using ThreadProfileRecordType = std::pair<const char *, unsigned int>;
 
+    // `TrackAll` : Trace every function, unmarked functions will be printed as "Unmarked".
+    // `TrackMarkedOnly` : Trace only marked function.
     enum class ProfileMode{
         TrackAll,
         TrackMarkedOnly
     };
 
+    // By default, profiling mode is set to `TrackMarkedOnly`.
+    static ProfileMode mode = ProfileMode::TrackMarkedOnly;
+
+    // Struct used to store function samples.
+    // It is intended to be used per thread (Note that the count type is NOT atomic compared to `GlobalProfileRecord`).
     struct ProfileRecordPerThread{
         ProfileRecordPerThread() : m_data() {}
         ~ProfileRecordPerThread(){
@@ -61,20 +71,23 @@ namespace NF{
         }
         std::unordered_map<const char *, unsigned int> m_data;
     };
+    thread_local ProfileRecordPerThread thread_local_profile_record;
 
+    // Strings
     constexpr char *unmarked_str = "Unmarked";
+    // Function is treated as "Unmarked" without NF_MARK_FUNC().
+    thread_local const char *callee = unmarked_str;
+
     const std::string title(" Nutrition Facts ");
     const int title_len = title.length();
     const std::string col1_title("Description");
     const std::string col2_title("Ratio");
 
+    // Timer for estimating duration between `Start()` and `End()`
     static std::chrono::system_clock::time_point start;
     static std::chrono::duration<double> duration;
-    static ProfileMode mode = ProfileMode::TrackMarkedOnly;
 
-    thread_local ProfileRecordPerThread thread_local_profile_record;
-    thread_local const char *callee = unmarked_str;
-
+    // `ProfileScope` represents function executed at the time.
     struct ProfileScope{
         ProfileScope(const char *new_callee){
             m_caller = callee;
@@ -86,16 +99,28 @@ namespace NF{
         const char *m_caller;
     };
 
-#define NF_MARK_FUNC(string) \
-    NF::ProfileScope NF_MARKER_PROFILED_FUNCTION(string);
-
+    // Macro function used to mark function for profiling.
+    #define NF_MARK_FUNC(string) \
+        NF::ProfileScope NF_MARKER_PROFILED_FUNCTION(string);
 
     class Profiler{
     public:
+        // This function starts to call `record_counter()` per period.
+        // This function must :
+        //    1. Activate calling `Profiler::record_counter()` per period.
+        //    2. Initialize `NF::start` variable (i.e start = std::chrono::system_clock::now();)
+        // Its implementation is OS-dependent.
         static void Start(ProfileMode mode_ = ProfileMode::TrackMarkedOnly);
 
+        // This function ends timer initialized in `Start()`.
+        // This function must :
+        //     1. Accumulate main thread's `NF::thread_local_profile_record` data to `NF::global_profile_record`.
+        //     2. Store duration between `NF::start` and  until now`NF::duration`
+        //     3. Stops calling `Profiler::record_counter()`
+        // Its implementation is OS-dependent.
         static void End();
 
+        // This function prints profiling data, considering length of descriptions.
         // TODO : This function can be simplified using <format>, which is not implemented yet.
         static void Show(){
             if(global_profile_record.empty()){
@@ -140,8 +165,16 @@ namespace NF{
             std::cout<<one_column_writer(width1 + width2 + 3, "", "-", "+")<<std::endl;
         }
     private:
-        inline static void record_counter(int _);
 
+        // This function accumulates a sample to thread local data.
+        // Intended to be called per period by `Start()`
+        inline static void record_counter(int _){
+            if((mode == ProfileMode::TrackMarkedOnly && unmarked_str!=callee) ||
+               mode == ProfileMode::TrackAll)
+                thread_local_profile_record.gather(callee);
+        }
+
+        // Helper function for printing profiling result
         static std::string one_column_writer(int width, const std::string &str,
                                              const std::string &blank=" ",
                                              const std::string &border="|"){
@@ -151,6 +184,7 @@ namespace NF{
             return border + blank + substr + blank + border;
         }
 
+        // Helper function for printing profiling result
         static std::string two_column_writer(int width1, int width2,
                                              const std::string &str1,
                                              const std::string &str2,
@@ -164,6 +198,7 @@ namespace NF{
             return border + blank + substr1 + blank + border + blank +substr2 + blank + border;
         }
 
+        // Used to sort profiling results
         static bool compare_ratio(const ThreadProfileRecordType &a, const ThreadProfileRecordType &b){
             return a.second > b.second;
         }
