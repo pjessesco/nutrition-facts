@@ -22,10 +22,47 @@
 // SOFTWARE.
 //
 
+#pragma once
+
 #include "nutrition_facts_common.h"
 
-#if defined(WIN32)
-#include "nutrition_facts_windows_impl.h"
-#else
-#include "nutrition_facts_linux_impl.h"
+#include <sys/time.h>
+#include <csignal>
+#include <cstring>
+
+#if !defined(WIN32)
+namespace NF{
+
+    struct itimerval it;
+    struct sigaction sa;
+
+        inline void Profiler::record_counter(int _){
+            if((mode == ProfileMode::TrackMarkedOnly && unmarked_str!=callee) ||
+               mode == ProfileMode::TrackAll)
+                thread_local_profile_record.gather(callee);
+        }
+
+        void Profiler::Start(ProfileMode mode_){
+            mode = mode_;
+            memset(&sa, 0, sizeof(sa));
+            sa.sa_handler = &record_counter;
+            sa.sa_flags = SA_RESTART;
+            sigaction(SIGPROF, &sa, NULL);
+
+            it.it_value.tv_sec = 0;
+            it.it_value.tv_usec = 10000;
+            it.it_interval.tv_sec = 0;
+            it.it_interval.tv_usec = 10000;
+
+            setitimer(ITIMER_PROF, &it, NULL);
+
+            start = std::chrono::system_clock::now();
+        }
+
+        void Profiler::End(){
+            duration = std::chrono::system_clock::now() - start;
+            memset(&sa, 0, sizeof(sa));
+            memset(&it, 0, sizeof(it));
+        }
+}
 #endif

@@ -22,10 +22,21 @@
 // SOFTWARE.
 //
 
+#pragma once
+
 #include "nutrition_facts_common.h"
 
 #if defined(WIN32)
-#include "nutrition_facts_windows_impl.h"
-#else
-#include "nutrition_facts_linux_impl.h"
+namespace NF{
+
+    void Profiler::Start(ProfileMode mode_){
+        std::cout<<"Not implemented for Windows currently."<<std::endl;
+    }
+
+    // OS dependent
+    void Profiler::End(){
+        std::cout<<"Not implemented for Windows currently."<<std::endl;
+    }
+
+}
 #endif
