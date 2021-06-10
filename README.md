@@ -2,22 +2,29 @@
 
 Tiny header-only sampling profiler for C++
 
-    + Nutrition Facts ----------------------------------------+--------+
-    | Description                                             | Ratio  |
-    +---------------------------------------------------------+--------+
-    | 40% execute4()                                          | 39.59% |
-    | execute2() : 30%                                        | 30.35% |
-    | This function(execute2()) is called in 20% probability. | 19.24% |
-    | execute1() 10% ->                                       | 10.82% |
-    +---------------------------------------------------------+--------+
-    | Total sample : 4039                                              |
-    | Duration : 10.068790s                                            |
-    +------------------------------------------------------------------+
+    + Nutrition Facts ------------------------------+--------+
+    | Description                                   | Ratio  |
+    +-----------------------------------------------+--------+
+    | 40% execute4()                                | 41.3%  |
+    | execute3() : 30%                              | 29.31% |
+    | This function is called with 20% probability. | 18.77% |
+    | execute1() 10% ->                             | 10.62% |
+    +-----------------------------------------------+--------+
+    | Total sample : 2269                                    |
+    | Duration : 12.279807s                                  |
+    +--------------------------------------------------------+
 
 ### Integration
     
-`nutrition-facts` is header-only, just copy and paste `nutrition_facts.h`. Note that it requires at least C++11 and it does not supports Windows currently. 
+`nutrition-facts` is header-only, just copy `nutrition_facts` directory to your include path.
+If you prefer to use it as git submodule, add
     
+    include_directories(ext/nutrition-facts)
+
+in your `CMakeLists.txt` `add_subdirectory()` is not needed. You will be able to include as
+
+    #include <nutrition_facts/nutrition_facts.h>
+
 
 ### Usage
 
