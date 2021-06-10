@@ -21,7 +21,7 @@ If you prefer to use it as git submodule, add
     
     include_directories(ext/nutrition-facts)
 
-in your `CMakeLists.txt` `add_subdirectory()` is not needed. You will be able to include as
+in your `CMakeLists.txt`. You will be able to include as
 
     #include <nutrition_facts/nutrition_facts.h>
 
