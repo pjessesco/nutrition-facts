@@ -36,6 +36,13 @@ namespace NF{
     struct itimerval it;
     struct sigaction sa;
 
+        inline void record_counter(int _){
+            std::cout<<"record_counter()\n";
+            if((mode == ProfileMode::TrackMarkedOnly && unmarked_str!=callee) ||
+               mode == ProfileMode::TrackAll)
+                thread_local_profile_record.gather(callee);
+        }
+
         void Profiler::Start(ProfileMode mode_){
             mode = mode_;
             memset(&sa, 0, sizeof(sa));

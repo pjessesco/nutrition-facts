@@ -166,13 +166,11 @@ namespace NF{
         }
     private:
 
-        // This function accumulates a sample to thread local data.
+        // This function defined in each OS-impl header files.
+        // It accumulates a sample to thread local data.
         // Intended to be called per period by `Start()`
-        inline static void record_counter(int _){
-            if((mode == ProfileMode::TrackMarkedOnly && unmarked_str!=callee) ||
-               mode == ProfileMode::TrackAll)
-                thread_local_profile_record.gather(callee);
-        }
+
+        // void record_counter()
 
         // Helper function for printing profiling result
         static std::string one_column_writer(int width, const std::string &str,
