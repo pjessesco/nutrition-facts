@@ -17,7 +17,7 @@ Tiny header-only sampling profiler for C++
 ### Features
 
 - Header-only inline sampling profiler
-- Supports Linux and macOS and Windows(experimental).
+- Supports Linux, macOS and Windows(experimental).
 - Support multi-thread case for Linux and macOS.
 
 
