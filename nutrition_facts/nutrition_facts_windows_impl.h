@@ -27,15 +27,39 @@
 #include "nutrition_facts_common.h"
 
 #if defined(WIN32)
+#include <Windows.h>
+#include <Winuser.h>
+#include <threadpoollegacyapiset.h>
+#define IDT_TIMER_1 1001
+
 namespace NF{
 
-    void Profiler::Start(ProfileMode mode_){
-        std::cout<<"Not implemented for Windows currently."<<std::endl;
+    HANDLE timer_handle_;
+
+    // Since timer is run on independent thread, its callee does not changes
+    // TODO : is it possible to access other thread's variable?
+    inline void record_counter(PVOID, BOOLEAN){
+        if((mode == ProfileMode::TrackMarkedOnly && unmarked_str!=callee) ||
+           mode == ProfileMode::TrackAll){
+            thread_local_profile_record.gather(callee);
+        }
+
     }
 
-    // OS dependent
+    void Profiler::Start(ProfileMode mode_){
+        std::cout<<"For windows, Nutrition-facts profiler does not support multi-thread profiling. It'll trace main thread only."<<std::endl;
+        mode = mode_;
+
+        HANDLE timer_handle_;
+        CreateTimerQueueTimer(&timer_handle_, NULL, record_counter, NULL, 0, 1, WT_EXECUTEDEFAULT);
+    }
+
+    // TODO : It may not support pause and restart
     void Profiler::End(){
-        std::cout<<"Not implemented for Windows currently."<<std::endl;
+        ChangeTimerQueueTimer(timer_handle_, 0, 0, 0);
+        for(auto e:thread_local_profile_record.m_data){
+            global_profile_record[e.first] += e.second;
+        }
     }
 
 }

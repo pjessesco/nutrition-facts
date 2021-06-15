@@ -103,8 +103,11 @@ int main(){
 
     std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 
+// Multi-thread profiling is not supported on Windows currently.
+#if defined(WIN32)
     base();
-
+#else
+    base();
     std::thread th1(base);
     std::thread th2(base);
     std::thread th3(base);
@@ -136,6 +139,7 @@ int main(){
     th13.join();
     th14.join();
     th15.join();
+#endif
 
     // NF::Profiler::End() shows profile result
     NF::Profiler::End();

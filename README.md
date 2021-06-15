@@ -14,6 +14,13 @@ Tiny header-only sampling profiler for C++
     | Duration : 12.279807s                                  |
     +--------------------------------------------------------+
 
+### Features
+
+- Header-only inline sampling profiler
+- Supports Linux and macOS and Windows(experimental).
+- Support multi-thread case for Linux and macOS.
+
+
 ### Integration
     
 `nutrition-facts` is header-only, just copy `nutrition_facts` directory to your include path.

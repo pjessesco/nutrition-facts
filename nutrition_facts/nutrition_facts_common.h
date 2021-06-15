@@ -71,12 +71,19 @@ namespace NF{
         }
         std::unordered_map<const char *, unsigned int> m_data;
     };
-    thread_local ProfileRecordPerThread thread_local_profile_record;
+
 
     // Strings
     constexpr char *unmarked_str = "Unmarked";
     // Function is treated as "Unmarked" without NF_MARK_FUNC().
+
+#if defined(WIN32)
+    const char *callee = unmarked_str;
+    ProfileRecordPerThread thread_local_profile_record;
+#else
     thread_local const char *callee = unmarked_str;
+    thread_local ProfileRecordPerThread thread_local_profile_record;
+#endif
 
     const std::string title(" Nutrition Facts ");
     const int title_len = title.length();
