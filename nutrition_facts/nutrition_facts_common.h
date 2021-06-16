@@ -38,13 +38,23 @@
 #include <cstring>
 
 namespace NF{
+
+    using GlobalProfileKey = std::pair<std::thread::id, const char *>;
+
+    struct pair_hash{
+        template <class T1, class T2>
+        std::size_t operator() (const std::pair<T1, T2> &pair) const {
+            return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+        }
+    };
+
     // `GlobalProfileRecord` is accumulated data from every thread.
     // It is updated when thread is terminated, or Profiler::End() is called.
-    using GlobalProfileRecord = std::unordered_map<const char *, std::atomic<unsigned int>>;
+    using GlobalProfileRecord = std::unordered_map<GlobalProfileKey, std::atomic<unsigned int>, pair_hash>;
     static GlobalProfileRecord global_profile_record;
 
-    // Pair of function description and its sample count
-    using ThreadProfileRecordType = std::pair<const char *, unsigned int>;
+    // Tuple of thread id, function description and its sample count
+    using ThreadProfileRecordType = std::tuple<std::thread::id, const char *, unsigned int>;
 
     // `TrackAll` : Trace every function, unmarked functions will be printed as "Unmarked".
     // `TrackMarkedOnly` : Trace only marked function.
@@ -56,6 +66,12 @@ namespace NF{
     // By default, profiling mode is set to `TrackMarkedOnly`.
     static ProfileMode mode = ProfileMode::TrackMarkedOnly;
 
+#if defined(WIN32)
+    const std::thread::id thread_id = std::this_thread::get_id();
+#else
+    thread_local const std::thread::id thread_id = std::this_thread::get_id();
+#endif
+
     // Struct used to store function samples.
     // It is intended to be used per thread (Note that the count type is NOT atomic compared to `GlobalProfileRecord`).
     struct ProfileRecordPerThread{
@@ -63,7 +79,7 @@ namespace NF{
         ~ProfileRecordPerThread(){
             // Pass thread_local record to global record
             for(auto e:m_data){
-                global_profile_record[e.first] += e.second;
+                global_profile_record[GlobalProfileKey(thread_id, e.first)] += e.second;
             }
         }
         inline void gather(const char *callee){
@@ -136,21 +152,24 @@ namespace NF{
 
             if(mode == ProfileMode::TrackMarkedOnly){
                 for(auto p = global_profile_record.begin(); p != global_profile_record.end(); p++){
-                    if(strcmp(p->first, unmarked_str) == 0){
+                    if(strcmp(p->first.second, unmarked_str) == 0){
                         global_profile_record.erase(p);
                     }
                 }
             }
 
             // Sort record by sample
-            std::vector<ThreadProfileRecordType> sorted_global_record(global_profile_record.begin(), global_profile_record.end());
+            std::vector<ThreadProfileRecordType> sorted_global_record;
+            for(std::pair<GlobalProfileKey, unsigned int> g:global_profile_record){
+                sorted_global_record.emplace_back(ThreadProfileRecordType(g.first.first, g.first.second, g.second));
+            }
             std::sort(sorted_global_record.begin(), sorted_global_record.end(), compare_ratio);
 
             int longest_description_len = -1;
             int total_sample = 0;
             for(ThreadProfileRecordType e : sorted_global_record){
-                longest_description_len = std::max<int>(strlen(e.first), longest_description_len);
-                total_sample += e.second;
+                longest_description_len = std::max<int>(strlen(std::get<1>(e)), longest_description_len);
+                total_sample += std::get<2>(e);
             }
 
             int width1 = std::max<int>(longest_description_len, col1_title.length());
@@ -167,10 +186,12 @@ namespace NF{
             std::cout<<two_column_writer(width1, width2, col1_title, col2_title)<<std::endl;
             std::cout<<two_column_writer(width1, width2, "", "", "-", "+")<<std::endl;
             for(ThreadProfileRecordType e : sorted_global_record){
-                std::stringstream ss;
-                ss << std::setprecision(4)<<(e.second / (float)total_sample * 100);
+                std::stringstream ss_tid;
+                ss_tid << std::get<0>(e);
+                std::stringstream ss_ratio;
+                ss_ratio << std::setprecision(4)<<(std::get<2>(e) / (float)total_sample * 100);
 
-                std::cout<<two_column_writer(width1, width2, e.first, ss.str()+"%")<<std::endl;
+                std::cout<<two_column_writer(width1, width2, std::get<1>(e), ss_ratio.str()+"%")<<std::endl;
             }
             std::cout<<two_column_writer(width1, width2, "", "", "-", "+")<<std::endl;
             std::cout<<one_column_writer(width1 + width2 + 3, "Total sample : "+std::to_string(total_sample))<<std::endl;
@@ -212,7 +233,10 @@ namespace NF{
 
         // Used to sort profiling results
         static bool compare_ratio(const ThreadProfileRecordType &a, const ThreadProfileRecordType &b){
-            return a.second > b.second;
+            if(std::get<0>(a) != std::get<0>(b)){
+                return std::get<0>(a) > std::get<0>(b);
+            }
+            return std::get<1>(a) > std::get<1>(b);
         }
     };
 }

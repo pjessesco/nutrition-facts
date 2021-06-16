@@ -61,7 +61,7 @@ namespace NF{
 
         void Profiler::End(){
             for(auto e:thread_local_profile_record.m_data){
-                global_profile_record[e.first] += e.second;
+                global_profile_record[GlobalProfileKey(thread_id, e.first)] += e.second;
             }
             duration = std::chrono::system_clock::now() - start;
             memset(&sa, 0, sizeof(sa));
