@@ -17,14 +17,15 @@ Tiny header-only sampling profiler for C++
 ### Features
 
 - Header-only inline sampling profiler
-- Supports Linux, macOS and Windows(experimental).
-- Support multi-thread case for Linux and macOS.
-
+- Supports Windows, macOS and Linux(tested on Ubuntu)
+- Supports multi-thread profiling for Linux and macOS
+- Provides an option to profile a non-marked function.
 
 ### Integration
     
 `nutrition-facts` is header-only, just copy `nutrition_facts` directory to your include path.
-If you prefer to use it as git submodule, add
+
+To import using CMake, add
     
     include_directories(ext/nutrition-facts)
 
