@@ -72,11 +72,10 @@ namespace NF{
         std::unordered_map<const char *, unsigned int> m_data;
     };
 
-
-    // Strings
-    constexpr char *unmarked_str = "Unmarked";
     // Function is treated as "Unmarked" without NF_MARK_FUNC().
+    constexpr char *unmarked_str = "Unmarked";
 
+    // Multi-thread is not supported in Windows.
 #if defined(WIN32)
     const char *callee = unmarked_str;
     ProfileRecordPerThread thread_local_profile_record;
@@ -134,6 +133,16 @@ namespace NF{
                 std::cout<<"Nutrition Facts table is empty! You probably forgot starting profiling with NF::START(), or marking functions using NF_RECORD_FUNC()."<<std::endl;
                 return;
             }
+
+#if defined(WIN32)
+            if(mode == ProfileMode::TrackMarkedOnly){
+                for(auto p = global_profile_record.begin(); p != global_profile_record.end(); p++){
+                    if(strcmp(p->first, unmarked_str) == 0){
+                        global_profile_record.erase(p);
+                    }
+                }
+            }
+#endif
 
             // Sort record by sample
             std::vector<ThreadProfileRecordType> sorted_global_record(global_profile_record.begin(), global_profile_record.end());
