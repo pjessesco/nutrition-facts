@@ -134,7 +134,6 @@ namespace NF{
                 return;
             }
 
-#if defined(WIN32)
             if(mode == ProfileMode::TrackMarkedOnly){
                 for(auto p = global_profile_record.begin(); p != global_profile_record.end(); p++){
                     if(strcmp(p->first, unmarked_str) == 0){
@@ -142,7 +141,6 @@ namespace NF{
                     }
                 }
             }
-#endif
 
             // Sort record by sample
             std::vector<ThreadProfileRecordType> sorted_global_record(global_profile_record.begin(), global_profile_record.end());
